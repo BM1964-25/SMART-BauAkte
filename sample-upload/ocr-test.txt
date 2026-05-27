@@ -1,0 +1,5 @@
+Rechnung OCR Test
+Projekt Lindenweg
+Betrag 1234 EUR
+Frist 15.06.2026
+Mangelhinweis: keine offene Mangelposition.

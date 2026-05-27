@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.DS_Store
+
+# Lokale Laufzeitdaten
+bauakte.db
+backups/
+uploads/
+
+# Lokale Geheimnisse
+.env

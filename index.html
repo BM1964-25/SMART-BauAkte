@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BauAkte KI - App</title>
+    <meta name="description" content="Arbeits-App für Bauakten, Dokumente, Fristen und KI-Analyse in Bau- und Handwerksbetrieben.">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <section class="auth-screen" id="authScreen" hidden>
+      <form class="auth-card" id="loginForm">
+        <span class="brand-mark" aria-hidden="true">BA</span>
+        <div>
+          <p class="eyebrow">Sicherer Zugang</p>
+          <h1>BauAkte KI</h1>
+          <p class="auth-copy">Anmelden, um Bauakten, Dokumente und Fristen im geschützten MVP-Bereich zu verwalten.</p>
+        </div>
+        <label>
+          <span>E-Mail</span>
+          <input name="email" type="email" value="anna@schneider-sohn.example" autocomplete="email" required>
+        </label>
+        <label>
+          <span>Passwort</span>
+          <input name="password" type="password" value="demo2026" autocomplete="current-password" required>
+        </label>
+        <label id="mfaCodeField" hidden>
+          <span>Zwei-Faktor-Code</span>
+          <input name="mfa_code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6-stelliger Code">
+        </label>
+        <button class="primary-button" type="submit">Anmelden</button>
+        <p class="auth-hint" id="loginHint">Demo-Zugang ist vorausgefüllt.</p>
+      </form>
+    </section>
+
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="App Navigation">
+        <a class="brand" href="#dashboard" aria-label="BauAkte KI Dashboard">
+          <span class="brand-mark" aria-hidden="true">BA</span>
+          <span>
+            <strong>BauAkte KI</strong>
+            <small id="brandTenant">Schneider & Sohn GmbH</small>
+          </span>
+        </a>
+
+        <nav class="nav-list" aria-label="Module">
+          <button class="nav-item active" type="button" data-view="dashboard"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"></path><path d="M6.5 10.5V20h11v-9.5"></path><path d="M10 20v-5h4v5"></path></svg></span><span class="nav-label">Übersicht</span></button>
+          <button class="nav-item" type="button" data-view="bauakten"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6.5h7l2 2H20v10.5H4z"></path><path d="M4 9h16"></path></svg></span><span class="nav-label">Bauakten</span></button>
+          <button class="nav-item" type="button" data-view="inbox"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.5h7l3 3V20.5H7z"></path><path d="M14 3.5v3h3"></path><path d="M9.5 11h5"></path><path d="M9.5 15h5"></path></svg></span><span class="nav-label">Dokumente</span></button>
+          <button class="nav-item" type="button" data-view="rechnungen"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3.5h10v17H7z"></path><path d="M9.5 7h5"></path><path d="M9.5 11h5"></path><path d="M9.5 15h2.5"></path><path d="M16.5 16.5l2 2 3-4"></path></svg></span><span class="nav-label">Rechnungen</span></button>
+          <button class="nav-item" type="button" data-view="aufgaben"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 6.5h12"></path><path d="M8 12h12"></path><path d="M8 17.5h12"></path><path d="M4 6.5l1 1 2-2"></path><path d="M4 12l1 1 2-2"></path><path d="M4 17.5l1 1 2-2"></path></svg></span><span class="nav-label">Aufgaben</span></button>
+          <button class="nav-item" type="button" data-view="fristen"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4v3"></path><path d="M17 4v3"></path><path d="M5 6.5h14v13H5z"></path><path d="M5 10h14"></path><path d="M8 14h3"></path></svg></span><span class="nav-label">Fristen</span></button>
+          <button class="nav-item" type="button" data-view="ki"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l1.6 5.1L19 10l-5.4 1.9L12 17l-1.6-5.1L5 10l5.4-1.9z"></path><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"></path></svg></span><span class="nav-label">KI-Assistent</span></button>
+          <button class="nav-item" type="button" data-view="admin"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"></path><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a7.5 7.5 0 0 0-2-1.1L14.2 3h-4.4l-.4 2.8a7.5 7.5 0 0 0-2 1.1l-2.4-1-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-1a7.5 7.5 0 0 0 2 1.1l.4 2.8h4.4l.4-2.8a7.5 7.5 0 0 0 2-1.1l2.4 1 2-3.4-2-1.5c0-.4.1-.8.1-1.2z"></path></svg></span><span class="nav-label">Admin</span></button>
+          <button class="nav-item" type="button" data-view="hilfe"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17z"></path><path d="M9.8 9.4a2.3 2.3 0 0 1 4.4.8c0 1.8-2.2 2-2.2 3.5"></path><path d="M12 17h.01"></path></svg></span><span class="nav-label">Hilfe</span></button>
+        </nav>
+
+        <button class="sidebar-toggle nav-item" id="sidebarToggle" type="button" aria-label="Menü einklappen" aria-expanded="true" title="Menü einklappen">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 5.5h15v13h-15z"></path><path d="M9 5.5v13"></path><path d="M16 9l-3 3 3 3"></path></svg></span>
+          <span class="nav-label">Menü einklappen</span>
+        </button>
+
+        <div class="tenant-card">
+          <span class="status-dot" aria-hidden="true"></span>
+          <div>
+            <strong>Mandant aktiv</strong>
+            <small id="tenantStats">3 Baustellen · 141 Dokumente</small>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-app">
+        <header class="app-header">
+          <div>
+            <p class="eyebrow">Arbeitscockpit</p>
+            <h1 id="viewTitle">Übersicht</h1>
+          </div>
+          <label class="global-search">
+            <span>Suchen</span>
+            <input id="globalSearch" type="search" placeholder="Dokument, Kunde, Adresse, Betrag, Frist">
+          </label>
+          <div class="header-actions">
+            <span class="save-state" id="saveState">Gespeichert</span>
+            <div class="notification-center">
+              <button class="icon-button notification-button" id="notificationBtn" type="button" aria-label="Benachrichtigungen" title="Benachrichtigungen">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
+                <span id="notificationCount" hidden>0</span>
+              </button>
+              <section class="notification-popover" id="notificationPopover" hidden>
+                <div class="panel-head">
+                  <div>
+                    <p class="eyebrow">Center</p>
+                    <h2>Hinweise</h2>
+                  </div>
+                  <div class="action-row inline">
+                    <button class="secondary-button" id="notifyTaskReminderBtn" type="button">Aufgaben erinnern</button>
+                    <button class="secondary-button" id="notifyDeadlineReminderBtn" type="button">Fristen erinnern</button>
+                    <button class="secondary-button" id="clearNotificationsBtn" type="button">Alle gelesen</button>
+                    <button class="secondary-button" id="closeNotificationsBtn" type="button">Schließen</button>
+                  </div>
+                </div>
+                <div class="notification-summary" id="notificationSummary"></div>
+                <div class="notification-filters" id="notificationFilters" aria-label="Hinweise filtern">
+                  <button class="active" type="button" data-notification-filter="all">Alle</button>
+                  <button type="button" data-notification-filter="today">Heute</button>
+                  <button type="button" data-notification-filter="overdue">Überfällig</button>
+                  <button type="button" data-notification-filter="mine">Meine Aufgaben</button>
+                  <button type="button" data-notification-filter="deadlines">Fristen</button>
+                  <button type="button" data-notification-filter="system">System</button>
+                </div>
+                <div class="notification-list" id="notificationList"></div>
+              </section>
+            </div>
+            <button class="secondary-button" id="passwordBtn" type="button">Passwort ändern</button>
+            <button class="secondary-button" id="logoutBtn" type="button">Abmelden</button>
+            <button class="primary-button" id="newDocBtn" type="button">Dokument prüfen</button>
+          </div>
+        </header>
+        <section class="search-results" id="searchResults" hidden aria-live="polite"></section>
+
+        <section class="view active" id="dashboard" data-title="Übersicht">
+          <div class="kpi-grid">
+            <article class="kpi-card">
+              <span>Dokumente diese Woche</span>
+              <strong id="kpiDocs">37</strong>
+              <small>+8 automatisch zugeordnet</small>
+            </article>
+            <article class="kpi-card urgent">
+              <span>Kritische Fristen</span>
+              <strong>5</strong>
+              <small>2 davon heute fällig</small>
+            </article>
+            <article class="kpi-card">
+              <span>Offene KI-Prüfungen</span>
+              <strong>12</strong>
+              <small>Vertrag, Mangel, Nachtrag</small>
+            </article>
+            <article class="kpi-card">
+              <span>Export Buchhaltung</span>
+              <strong>Mai</strong>
+              <small>bereit für DATEV/ZIP</small>
+            </article>
+          </div>
+
+          <div class="dashboard-grid">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Aktive Bauakte</p>
+                  <h2 id="activeProjectName">Mehrfamilienhaus Lindenweg</h2>
+                </div>
+                <span class="pill">laufend</span>
+              </div>
+
+              <div class="project-summary">
+                <div>
+                  <span>Kunde</span>
+                  <strong>Müller Bau GmbH</strong>
+                </div>
+                <div>
+                  <span>Adresse</span>
+                  <strong>Lindenweg 18, 70563 Stuttgart</strong>
+                </div>
+                <div>
+                  <span>Verantwortlich</span>
+                  <strong>Anna Schneider</strong>
+                </div>
+              </div>
+
+              <div class="progress-stack" aria-label="Projektfortschritt">
+                <div>
+                  <span>Dokumentation</span>
+                  <strong>82%</strong>
+                </div>
+                <div class="progress-track"><span style="width: 82%"></span></div>
+                <div>
+                  <span>Abnahmeunterlagen</span>
+                  <strong>61%</strong>
+                </div>
+                <div class="progress-track"><span style="width: 61%"></span></div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Inbox</p>
+                  <h2>Neue Dokumente</h2>
+                </div>
+                <button class="icon-button" id="analyzeBtn" type="button" aria-label="Nächstes Dokument analysieren" title="Nächstes Dokument analysieren">+</button>
+              </div>
+              <div class="inbox-list" id="inboxList" aria-live="polite"></div>
+            </section>
+          </div>
+
+          <div class="dashboard-grid lower">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Heute wichtig</p>
+                  <h2>Fristen und Aufgaben</h2>
+                </div>
+              </div>
+              <div class="task-list" id="taskList"></div>
+            </section>
+
+            <section class="panel ai-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">KI-Prüfung</p>
+                  <h2>Analyse Ergebnis</h2>
+                </div>
+              </div>
+              <div class="analysis-box" id="analysisBox">
+                <span class="result-label">KI-Vorschlag</span>
+                <h3>Rechnung erkannt</h3>
+                <p>Projekt: Mehrfamilienhaus Lindenweg · Zahlungsziel: 06.06.2026 · Betrag: 8.430,20 EUR</p>
+                <div class="source-row">Quelle: RE-2026-184_Material-Elektro.pdf · Seite 1</div>
+              </div>
+              <div class="action-row">
+                <button class="secondary-button" id="rejectSuggestion" type="button">Korrigieren</button>
+                <button class="primary-button" id="acceptSuggestion" type="button">Vorschlag übernehmen</button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="bauakten" data-title="Bauakten">
+          <div class="workbench">
+            <aside aria-label="Bauakten">
+              <div class="project-list" id="projectList"></div>
+              <form class="quick-form" id="projectForm">
+                <h3>Neue Bauakte</h3>
+                <input name="name" type="text" placeholder="Projektname" required>
+                <input name="customer" type="text" placeholder="Kunde" required>
+                <input name="address" type="text" placeholder="Adresse">
+                <button class="primary-button" type="submit">Bauakte anlegen</button>
+              </form>
+            </aside>
+
+            <section class="panel document-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Projektakte</p>
+                  <h2 id="projectTitle">Mehrfamilienhaus Lindenweg</h2>
+                </div>
+                <div class="action-row inline">
+                  <button class="secondary-button" id="exportBtn" type="button">Export</button>
+                  <button class="secondary-button danger" id="resetDemoBtn" type="button">Demo zurücksetzen</button>
+                </div>
+              </div>
+              <div class="project-command">
+                <div class="project-metrics" id="projectMetrics"></div>
+                <div class="project-insight" id="projectInsight"></div>
+              </div>
+              <div class="project-cockpit-grid">
+                <section class="cockpit-section">
+                  <div class="mini-head">
+                    <span>Workflow</span>
+                    <strong>Statusverteilung</strong>
+                  </div>
+                  <div class="status-stack" id="projectStatusStack"></div>
+                </section>
+                <section class="cockpit-section">
+                  <div class="mini-head">
+                    <span>Offene Punkte</span>
+                    <strong>Aufgaben</strong>
+                  </div>
+                  <div class="compact-list" id="projectOpenTasks"></div>
+                </section>
+                <section class="cockpit-section">
+                  <div class="mini-head">
+                    <span>Termine</span>
+                    <strong>Kommende Fristen</strong>
+                  </div>
+                  <div class="compact-list" id="projectUpcomingDeadlines"></div>
+                </section>
+                <section class="cockpit-section">
+                  <div class="mini-head">
+                    <span>Aktivität</span>
+                    <strong>Letzte Bewegungen</strong>
+                  </div>
+                  <div class="compact-list" id="projectActivityList"></div>
+                </section>
+              </div>
+              <div class="document-filterbar">
+                <input id="documentFilterSearch" type="search" placeholder="In dieser Bauakte suchen">
+                <select id="documentTypeFilter">
+                  <option value="all">Alle Typen</option>
+                </select>
+                <select id="documentRiskFilter">
+                  <option value="all">Alle Risiken</option>
+                  <option value="risk">Kritisch</option>
+                  <option value="warn">Prüfen</option>
+                  <option value="ok">Bereit</option>
+                  <option value="ocr">OCR offen</option>
+                </select>
+                <select id="documentStatusFilter">
+                  <option value="all">Alle Status</option>
+                </select>
+                <button class="secondary-button" id="clearDocumentFiltersBtn" type="button">Filter zurücksetzen</button>
+              </div>
+              <div class="document-table" role="table" aria-label="Dokumente">
+                <div class="table-head" role="row">
+                  <span>Dokument</span>
+                  <span>Typ</span>
+                  <span>Status</span>
+                  <span>Frist</span>
+                  <span>Nächste Aktion</span>
+                </div>
+                <div id="documentRows"></div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="inbox" data-title="Dokumente">
+          <div class="inbox-workflow">
+            <section class="panel upload-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Dokumenten Eingang</p>
+                  <h2>Prüfen und zuordnen</h2>
+                </div>
+              </div>
+              <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Beispieldokument analysieren">
+                <input id="fileInput" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.csv,.md,.doc,.docx,.xlsx,.zip">
+                <div class="doc-visual" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <strong>Dokumente hier ablegen oder auswählen</strong>
+                <p>Sammelupload mit KI-Vorschlag für Bauakte, Kategorie, Frist und nächste Aufgabe.</p>
+              </div>
+              <div class="upload-controls">
+                <label>
+                  <span>Ziel-Bauakte</span>
+                  <select id="uploadProjectSelect"></select>
+                </label>
+              </div>
+              <div class="upload-status-list" id="uploadStatusList"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Extraktion</p>
+                  <h2>Erkannte Felder</h2>
+                </div>
+              </div>
+              <div class="field-grid" id="fieldGrid"></div>
+            </section>
+
+            <section class="panel inbox-review-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Eingangsprüfung</p>
+                  <h2>Eingangscenter</h2>
+                </div>
+              </div>
+              <div class="inbox-center-metrics" id="inboxCenterMetrics"></div>
+              <div class="inbox-toolbar">
+                <input id="inboxSearch" type="search" placeholder="Eingang durchsuchen">
+                <select id="inboxTypeFilter">
+                  <option value="all">Alle Eingänge</option>
+                  <option value="document">Dokumente</option>
+                  <option value="email">E-Mails</option>
+                  <option value="risk">Kritisch</option>
+                  <option value="open">Offen</option>
+                </select>
+                <button class="secondary-button" id="clearInboxFiltersBtn" type="button">Filter zurücksetzen</button>
+                <button class="secondary-button" id="approveSelectedInboxBtn" type="button">Auswahl freigeben</button>
+              </div>
+              <div class="inbox-batch-panel">
+                <select id="batchProjectSelect"></select>
+                <select id="batchAssigneeSelect"></select>
+                <select id="batchActionSelect">
+                  <option value="">Keine Aufgabe</option>
+                  <option value="Prüfen">Prüfen</option>
+                  <option value="Freigeben">Freigeben</option>
+                  <option value="Klären">Klären</option>
+                  <option value="Zahlen">Zahlen</option>
+                  <option value="Archivieren">Archivieren</option>
+                </select>
+                <input id="batchDueInput" type="text" placeholder="Frist, z.B. Heute oder 20.06.2026">
+                <button class="primary-button" id="applyInboxBatchBtn" type="button">Stapel anwenden</button>
+              </div>
+              <div class="inbox-list" id="uploadReviewList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="rechnungen" data-title="Rechnungen">
+          <section class="panel invoice-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Zahlungslauf</p>
+                <h2>Rechnungen prüfen, freigeben und exportieren</h2>
+              </div>
+              <div class="action-row compact-actions">
+                <button class="secondary-button" id="exportDatevInvoicesBtn" type="button">Buchhaltung CSV</button>
+                <button class="secondary-button" id="exportPaymentRunBtn" type="button">Zahlungslauf CSV</button>
+                <button class="secondary-button" id="exportInvoicesBtn" type="button">Übersicht CSV</button>
+              </div>
+            </div>
+            <div class="invoice-metrics" id="invoiceMetricPanel"></div>
+            <div class="invoice-toolbar">
+              <input id="invoiceSearch" type="search" placeholder="Rechnung, Bauakte, Betrag oder Lieferant suchen">
+              <select id="invoiceStatusFilter">
+                <option value="all">Alle Status</option>
+                <option value="open">Offen</option>
+                <option value="geprüft">Geprüft</option>
+                <option value="freigegeben">Freigegeben</option>
+                <option value="zur_zahlung">Zur Zahlung</option>
+                <option value="bezahlt">Bezahlt</option>
+                <option value="overdue">Überfällig</option>
+              </select>
+              <select id="invoiceProjectFilter">
+                <option value="all">Alle Bauakten</option>
+              </select>
+            </div>
+            <div class="invoice-rule-panel">
+              <div class="mini-head">
+                <span>Automatisierung</span>
+                <strong>Buchungsregeln</strong>
+              </div>
+              <div class="invoice-rule-list" id="invoiceRuleList"></div>
+              <form class="invoice-rule-form" id="invoiceRuleForm">
+                <input name="id" type="hidden">
+                <input name="keyword" type="text" placeholder="Stichwort, z. B. Elektro" required>
+                <input name="booking_account" type="text" placeholder="Buchungskonto" required>
+                <input name="tax_rate" type="text" inputmode="decimal" placeholder="Steuer %" value="19">
+                <input name="label" type="text" placeholder="Bezeichnung">
+                <label class="check-line"><input name="is_active" type="checkbox" checked> Aktiv</label>
+                <button class="secondary-button" id="resetInvoiceRuleFormBtn" type="button">Neu</button>
+                <button class="secondary-button" type="submit">Regel speichern</button>
+              </form>
+            </div>
+            <div class="invoice-table" role="table" aria-label="Rechnungen">
+              <div class="invoice-head" role="row">
+                <span>Rechnung</span>
+                <span>Bauakte</span>
+                <span>Betrag</span>
+                <span>Fälligkeit</span>
+                <span>Status</span>
+                <span>Aktion</span>
+              </div>
+              <div class="invoice-list" id="invoiceList"></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" id="aufgaben" data-title="Meine Aufgaben">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Verantwortung</p>
+                <h2>Meine Aufgaben</h2>
+              </div>
+              <div class="action-row compact-actions">
+                <button class="secondary-button active" id="myTasksFilter" type="button" data-filter="mine">Meine</button>
+                <button class="secondary-button" id="openTasksFilter" type="button" data-filter="open">Offen</button>
+                <button class="secondary-button" id="allTasksFilter" type="button" data-filter="all">Alle</button>
+                <button class="primary-button" id="taskReminderBtn" type="button">Erinnerung senden</button>
+              </div>
+            </div>
+            <div class="task-overview" id="taskOverview"></div>
+            <div class="assigned-task-list" id="assignedTaskList"></div>
+          </section>
+        </section>
+
+        <section class="view" id="fristen" data-title="Fristen">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Fristen Cockpit</p>
+                <h2>Fälligkeiten und Wiedervorlagen</h2>
+              </div>
+              <div class="action-row compact-actions">
+                <button class="secondary-button" id="deadlineReminderBtn" type="button">Erinnerung senden</button>
+                <button class="secondary-button" id="weekFilter" type="button">Diese Woche</button>
+              </div>
+            </div>
+            <div class="deadline-board" id="deadlineBoard"></div>
+            <form class="quick-form horizontal" id="deadlineForm">
+              <input name="date" type="text" placeholder="Datum oder Heute" required>
+              <input name="title" type="text" placeholder="Frist oder Aufgabe" required>
+              <input name="detail" type="text" placeholder="Projekt / Quelle">
+              <button class="primary-button" type="submit">Frist anlegen</button>
+            </form>
+          </section>
+        </section>
+
+        <section class="view" id="ki" data-title="KI-Assistent">
+          <div class="assistant-layout">
+            <section class="panel assistant-panel">
+              <div class="chat-history" id="chatHistory">
+                <div class="chat-line user">Welche Unterlagen fehlen für die Abnahme Lindenweg?</div>
+                <div class="chat-line bot">Es fehlen 3 Punkte: unterschriebenes Abnahmeprotokoll Bauteil B, Fotodokumentation Treppenhaus und Prüfnachweis Elektro. Quellen: Abnahmeprotokoll Seite 2, Mangelbericht vom 21.05.2026.</div>
+              </div>
+              <div class="chat-input">
+                <input id="askInput" type="text" value="Zeige alle offenen Fristen diese Woche">
+                <button class="icon-button solid" id="askBtn" type="button" aria-label="KI fragen" title="KI fragen">→</button>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Professionelle Leitplanken</p>
+                  <h2>Kontrolle statt Blackbox</h2>
+                </div>
+              </div>
+              <div class="guardrail-list">
+                <article>
+                  <strong>Quellenpflicht</strong>
+                  <span>Antworten verweisen auf Dokument, Seite und Fundstelle.</span>
+                </article>
+                <article>
+                  <strong>Freigabe</strong>
+                  <span>Ablage, Fristen und Exporte können manuell bestätigt werden.</span>
+                </article>
+                <article>
+                  <strong>Rollenrechte</strong>
+                  <span>Büro, Bauleitung, Geschäftsführung und Steuerberater getrennt.</span>
+                </article>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="admin" data-title="Admin">
+          <section class="panel onboarding-panel" id="onboardingPanel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Produktions-Onboarding</p>
+                <h2>Einrichtung für neue Betriebe</h2>
+              </div>
+              <span class="pill" id="onboardingProgressPill">0%</span>
+            </div>
+            <div class="onboarding-progress"><span id="onboardingProgressBar"></span></div>
+            <div class="onboarding-list" id="onboardingList"></div>
+          </section>
+          <div class="admin-grid">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Mandant</p>
+                  <h2>Firma, Lizenz und Datenraum</h2>
+                </div>
+              </div>
+              <div class="storage-grid" id="tenantStatus"></div>
+              <form class="quick-form detail-form" id="tenantForm">
+                <input name="name" type="text" placeholder="Firmenname" required>
+                <input name="plan" type="text" placeholder="Tarif / Plan" required>
+                <input name="company_email" type="email" placeholder="Kontakt-E-Mail">
+                <input name="phone" type="text" placeholder="Telefon">
+                <textarea name="billing_address" placeholder="Rechnungsadresse"></textarea>
+                <select name="license_status">
+                  <option value="aktiv">aktiv</option>
+                  <option value="test">test</option>
+                  <option value="pausiert">pausiert</option>
+                  <option value="gekündigt">gekündigt</option>
+                </select>
+                <input name="seat_limit" type="number" min="1" max="500" placeholder="Sitzlimit">
+                <input name="data_region" type="text" placeholder="Datenregion">
+                <input name="escalation_interval_minutes" type="number" min="0" max="10080" step="15" placeholder="Eskalationsprüfung alle Minuten, 0 = aus">
+                <button class="primary-button" type="submit">Mandant speichern</button>
+              </form>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Rollenverwaltung</p>
+                  <h2>Benutzer und Rechte</h2>
+                </div>
+              </div>
+              <div class="user-list" id="userList"></div>
+              <h3>Sicherheitsrichtlinien</h3>
+              <div class="security-policy-panel" id="securityPolicyPanel"></div>
+              <div class="action-row inline">
+                <button class="secondary-button" id="enforceAdminMfaBtn" type="button">Admin-2FA erzwingen</button>
+              </div>
+              <h3>Rollenmatrix</h3>
+              <div class="role-matrix" id="roleMatrix"></div>
+              <form class="quick-form detail-form" id="userForm">
+                <h3>Benutzer einladen</h3>
+                <input name="name" type="text" placeholder="Name" required>
+                <input name="email" type="email" placeholder="E-Mail" required>
+                <select name="role">
+                  <option value="Büro">Büro</option>
+                  <option value="Bauleitung">Bauleitung</option>
+                  <option value="Steuerberater">Steuerberater</option>
+                  <option value="Geschäftsführung">Geschäftsführung</option>
+                </select>
+                <input name="password" type="text" placeholder="Startpasswort, optional">
+                <p class="auth-hint">Mindestens 12 Zeichen mit Großbuchstaben, Kleinbuchstaben, Zahl und Sonderzeichen.</p>
+                <button class="primary-button" type="submit">Benutzer anlegen</button>
+              </form>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Betrieb</p>
+                  <h2>Sicherung, OCR und Audit</h2>
+                </div>
+              </div>
+              <h3>OCR-Warteschlange</h3>
+              <div class="guardrail-list queue-list" id="ocrQueue"></div>
+              <h3>E-Mail-Eingang</h3>
+              <div class="action-row inline">
+                <button class="secondary-button" id="demoEmailImportBtn" type="button">Demo-E-Mail abrufen</button>
+              </div>
+              <div class="guardrail-list inbound-mail-list" id="emailInboxList"></div>
+              <h3>E-Mail-Ausgang</h3>
+              <div class="storage-grid mail-status-grid" id="mailStatusPanel"></div>
+              <form class="quick-form detail-form mail-settings-form" id="mailSettingsForm">
+                <select name="driver">
+                  <option value="outbox">Outbox ohne externen Versand</option>
+                  <option value="smtp">SMTP echter Versand</option>
+                </select>
+                <input name="from_address" type="text" placeholder="Absender">
+                <input name="host" type="text" placeholder="SMTP-Server">
+                <input name="port" type="number" min="1" max="65535" placeholder="Port">
+                <input name="username" type="text" placeholder="SMTP-Benutzer">
+                <input name="password" type="password" placeholder="SMTP-Passwort neu setzen">
+                <label class="check-line"><input name="tls" type="checkbox"> TLS verwenden</label>
+                <button class="primary-button" type="submit">Mail-Konfiguration speichern</button>
+              </form>
+              <form class="quick-form detail-form mail-test-form" id="mailTestForm">
+                <div>
+                  <strong>Testversand</strong>
+                  <span>Prüft die aktuelle Mail-Konfiguration und legt das Ergebnis im Ausgang ab.</span>
+                </div>
+                <input name="recipient" type="email" placeholder="Test-E-Mail an" required>
+                <button class="secondary-button" type="submit">Testmail senden</button>
+              </form>
+              <div class="guardrail-list mail-list" id="outboxList"></div>
+              <h3>Versandprotokoll</h3>
+              <div class="mail-log-toolbar">
+                <input id="deliveryLogSearch" type="search" placeholder="Protokoll durchsuchen">
+                <select id="deliveryLogStatus">
+                  <option value="all">Alle Status</option>
+                  <option value="gesendet">Gesendet</option>
+                  <option value="fehler">Fehler</option>
+                  <option value="lokal gespeichert">Lokal gespeichert</option>
+                </select>
+                <button class="secondary-button" id="exportDeliveryLogBtn" type="button">CSV exportieren</button>
+              </div>
+              <div class="delivery-log" id="deliveryLogList"></div>
+              <h3>E-Mail-Vorlagen</h3>
+              <div class="template-list" id="templateList"></div>
+              <h3>Eskalationen</h3>
+              <div class="storage-grid escalation-metrics" id="escalationMetrics"></div>
+              <div class="guardrail-list escalation-list" id="escalationList"></div>
+              <button class="primary-button" id="runEscalationsBtn" type="button">Eskalationen auslösen</button>
+              <h3>Produktionsspeicher</h3>
+              <div class="storage-grid" id="storagePanel"></div>
+              <h3>Systemcheck Verkaufsversion</h3>
+              <div class="system-score" id="systemScorePanel"></div>
+              <div class="guardrail-list system-check-list" id="systemCheckPanel"></div>
+              <div class="action-row inline">
+                <button class="secondary-button" id="runSystemCheckBtn" type="button">Systemcheck ausführen</button>
+                <button class="secondary-button" id="repairChecksumsBtn" type="button">Datei-Prüfwerte nachtragen</button>
+              </div>
+              <h3>Sicherheit und DSGVO</h3>
+              <div class="storage-grid compliance-grid" id="compliancePanel"></div>
+              <form class="quick-form detail-form compliance-form" id="complianceForm">
+                <div>
+                  <strong>Aufbewahrungsfristen</strong>
+                  <span>Technische Protokolle können nach Ablauf automatisch bereinigt werden. Dokumente bleiben im geschützten Archiv.</span>
+                </div>
+                <input name="audit_retention_days" type="number" min="30" max="3650" step="30" placeholder="Audit-Protokoll in Tagen">
+                <input name="mail_retention_days" type="number" min="30" max="3650" step="30" placeholder="E-Mail-Protokolle in Tagen">
+                <button class="primary-button" type="submit">Fristen speichern</button>
+              </form>
+              <div class="action-row inline">
+                <button class="secondary-button" id="verifyBackupBtn" type="button">Backup prüfen</button>
+                <button class="secondary-button" id="cleanupComplianceBtn" type="button">Alte Protokolle bereinigen</button>
+                <a class="secondary-button" href="/api/audit/export">Audit CSV exportieren</a>
+              </div>
+              <h3>Audit</h3>
+              <div class="guardrail-list" id="auditList"></div>
+              <h3>Dokumentversionen</h3>
+              <div class="guardrail-list" id="versionList"></div>
+              <h3>Geschütztes Archiv</h3>
+              <div class="guardrail-list" id="archiveList"></div>
+              <div class="action-row">
+                <button class="secondary-button" id="sendOutboxBtn" type="button">E-Mail-Ausgang senden</button>
+                <button class="secondary-button" id="backupBtn" type="button">Backup erstellen</button>
+                <a class="primary-button" href="/api/export">JSON exportieren</a>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="hilfe" data-title="Hilfe">
+          <div class="help-layout">
+            <aside class="help-toc" aria-label="Bedienungsanleitung Navigation">
+              <p class="eyebrow">Bedienungsanleitung</p>
+              <a href="#hilfe-schnellstart">Schnellstart</a>
+              <a href="#hilfe-module">Module</a>
+              <a href="#hilfe-rollen">Rollen und Rechte</a>
+              <a href="#hilfe-sicherheit">Sicherheit</a>
+              <a href="#hilfe-daten">Daten und Backups</a>
+              <a href="#hilfe-faq">Häufige Fragen</a>
+            </aside>
+
+            <section class="panel help-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Hilfe</p>
+                  <h2>Komplette Bedienungsanleitung</h2>
+                </div>
+                <span class="pill">Bau und Handwerk</span>
+              </div>
+
+              <section class="help-section" id="hilfe-schnellstart">
+                <h3>Schnellstart für den Büroalltag</h3>
+                <ol class="help-steps">
+                  <li><strong>Bauakte anlegen oder auswählen.</strong><span>Öffnen Sie „Bauakten“, wählen Sie ein Projekt oder legen Sie eine neue Baustelle mit Kunde und Adresse an.</span></li>
+                  <li><strong>Dokument prüfen.</strong><span>Über „Dokument prüfen“ laden Sie Rechnungen, Lieferscheine, Mängelanzeigen, Verträge oder Fotos in die Akte.</span></li>
+                  <li><strong>KI-Vorschlag kontrollieren.</strong><span>Die Anwendung erkennt Dokumenttyp, Projektbezug, Betrag, Frist und mögliche Risiken. Übernehmen Sie den Vorschlag erst nach Prüfung.</span></li>
+                  <li><strong>Frist setzen.</strong><span>Bei Zahlungszielen, Gewährleistung, Abnahme, Nachtrag oder Mängelbearbeitung tragen Sie eine Wiedervorlage ein.</span></li>
+                  <li><strong>KI gezielt fragen.</strong><span>Im KI-Assistenten fragen Sie nach offenen Risiken, fehlenden Unterlagen oder Zusammenfassungen mit Quellenhinweis.</span></li>
+                  <li><strong>Export und Sicherung nutzen.</strong><span>Für Steuerberater, Bauleitung oder Geschäftsführung exportieren Sie Daten und erstellen regelmäßig Backups.</span></li>
+                </ol>
+              </section>
+
+              <section class="help-section" id="hilfe-module">
+                <h3>Module der Anwendung</h3>
+                <div class="help-row"><strong>Übersicht</strong><span>Zeigt Kennzahlen, aktive Bauakte, neue Dokumente, heutige Fristen und den wichtigsten KI-Vorschlag.</span></div>
+                <div class="help-row"><strong>Bauakten</strong><span>Verwaltet Projekte, Kunden, Adressen, Dokumentlisten, Vorschau, Status, Archiv und Export je Baustelle.</span></div>
+                <div class="help-row"><strong>Dokumente</strong><span>Bündelt Uploads, OCR-Analyse, Dokumentstatus, Versionen, Freigaben und die Zuordnung zur passenden Bauakte.</span></div>
+                <div class="help-row"><strong>Fristen</strong><span>Überwacht Zahlungsziele, Mängel, Nachträge, Abnahmen und Wiedervorlagen. Kritische Termine werden hervorgehoben.</span></div>
+                <div class="help-row"><strong>KI-Assistent</strong><span>Beantwortet Fragen zu Akten und Dokumenten. Professionell wird er, wenn jede Antwort nachvollziehbare Quellen und Grenzen nennt.</span></div>
+                <div class="help-row"><strong>Admin</strong><span>Enthält Mandant, Benutzer, Rollen, E-Mail-Ausgang, Speicherstatus, Backups, Audit-Protokoll, Archiv und Dokumentversionen.</span></div>
+              </section>
+
+              <section class="help-section" id="hilfe-rollen">
+                <h3>Rollen und Rechte</h3>
+                <div class="help-row"><strong>Geschäftsführung</strong><span>Sieht alle Bereiche, verwaltet Mandant, Benutzer, Lizenz, Sicherung und Auswertungen.</span></div>
+                <div class="help-row"><strong>Büro</strong><span>Bearbeitet Dokumente, Rechnungen, Fristen, E-Mail-Ausgang und Projektunterlagen im Tagesgeschäft.</span></div>
+                <div class="help-row"><strong>Bauleitung</strong><span>Greift auf relevante Bauakten, Mängel, Fotos, Nachträge, Abnahmen und Wiedervorlagen zu.</span></div>
+                <div class="help-row"><strong>Steuerberater</strong><span>Erhält gezielten Zugriff auf Rechnungen, Buchhaltungsexporte und steuerrelevante Unterlagen.</span></div>
+              </section>
+
+              <section class="help-section" id="hilfe-sicherheit">
+                <h3>Sicherheit und professionelle Nutzung</h3>
+                <div class="help-row"><strong>Passwort ändern</strong><span>Nutzen Sie die Kopfzeile, um das eigene Passwort regelmäßig zu ändern.</span></div>
+                <div class="help-row"><strong>Alle Geräte abmelden</strong><span>Nach Geräteverlust oder Mitarbeiterwechsel sollten aktive Sitzungen beendet werden.</span></div>
+                <div class="help-row"><strong>Zwei-Faktor-Anmeldung</strong><span>Für eine Verkaufsversion sollte die Zwei-Faktor-Anmeldung je Benutzer aktivierbar sein.</span></div>
+                <div class="help-row"><strong>Audit-Protokoll</strong><span>Wichtige Aktionen wie Upload, Statusänderung, Export, Archivierung und Benutzerverwaltung werden nachvollziehbar protokolliert.</span></div>
+              </section>
+
+              <section class="help-section" id="hilfe-daten">
+                <h3>Daten, Speicher und Backups</h3>
+                <div class="help-row"><strong>Lokale Version</strong><span>Diese Entwicklungsfassung speichert Stammdaten in der lokalen Datenbank „bauakte.db“ und Dokumentdateien im Upload-Verzeichnis des Projekts.</span></div>
+                <div class="help-row"><strong>Verkaufsversion</strong><span>Für Kundenbetrieb empfiehlt sich ein Server mit PostgreSQL, verschlüsseltem Datei- oder Objektspeicher, täglicher Sicherung und sauberer Mandantentrennung.</span></div>
+                <div class="help-row"><strong>Backup</strong><span>Backups sichern Datenbank, Dokumente, Versionen und Protokolle. Sie sollten automatisiert und regelmäßig wiederherstellbar getestet werden.</span></div>
+                <div class="help-row"><strong>E-Mail-Ausgang</strong><span>Der Ausgang sammelt vorbereitete Nachrichten, damit Erinnerungen und Versandvorgänge prüfbar bleiben, bevor sie tatsächlich gesendet werden.</span></div>
+              </section>
+
+              <section class="help-section" id="hilfe-faq">
+                <h3>Häufige Fragen</h3>
+                <details>
+                  <summary>Wo werden die Daten gespeichert?</summary>
+                  <p>In dieser lokalen App im Projektordner: strukturierte Daten in der SQLite-Datenbank, Dateien im Upload-Verzeichnis und Sicherungen im Backup-Bereich. Für Kunden sollte die Speicherung serverseitig, verschlüsselt und mandantengetrennt erfolgen.</p>
+                </details>
+                <details>
+                  <summary>Was passiert beim Dokument-Upload?</summary>
+                  <p>Das Dokument wird gespeichert, einer Bauakte zugeordnet und für OCR sowie KI-Analyse vorbereitet. Der Vorschlag bleibt ein Vorschlag und sollte fachlich geprüft werden.</p>
+                </details>
+                <details>
+                  <summary>Was bedeutet E-Mail-Ausgang?</summary>
+                  <p>Der E-Mail-Ausgang ist eine prüfbare Warteschlange für Erinnerungen und Versandvorgänge. So wird nichts unkontrolliert verschickt.</p>
+                </details>
+                <details>
+                  <summary>Reicht diese App schon für eine Verkaufsversion?</summary>
+                  <p>Sie ist ein starker Prototyp mit vielen Profi-Funktionen. Für den Verkauf fehlen je nach Zielkunde noch Hosting, Vertrags- und Datenschutzpaket, Mandantenbetrieb, automatisierte Backups, Monitoring, Supportprozess und belastbare Tests.</p>
+                </details>
+              </section>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog class="detail-dialog" id="documentDialog">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">Dokument Detail</p>
+          <h2 id="dialogTitle">Dokument</h2>
+        </div>
+        <button class="icon-button" id="closeDialogBtn" type="button" aria-label="Schließen" title="Schließen">×</button>
+      </div>
+      <div class="detail-grid">
+        <section>
+          <h3>Metadaten</h3>
+          <div class="field-grid" id="dialogFields"></div>
+          <form class="quick-form detail-form" id="documentStatusForm">
+            <h3>Workflow bearbeiten</h3>
+            <select name="status">
+              <option value="offen">Eingang / offen</option>
+              <option value="prüfen">In Prüfung</option>
+              <option value="klären">Klärung erforderlich</option>
+              <option value="geprüft">Geprüft</option>
+              <option value="freigegeben">Freigegeben</option>
+              <option value="zur_zahlung">Zur Zahlung</option>
+              <option value="bezahlt">Bezahlt</option>
+              <option value="erledigt">Erledigt</option>
+            </select>
+            <input name="due" type="text" placeholder="Frist">
+            <select name="tone">
+              <option value="ok">bereit / ok</option>
+              <option value="warn">prüfen</option>
+              <option value="risk">kritisch</option>
+            </select>
+            <div class="workflow-preview" id="documentWorkflowPreview"></div>
+            <button class="primary-button" type="submit">Status speichern</button>
+          </form>
+          <div class="approval-panel" id="documentApprovalPanel"></div>
+          <form class="quick-form detail-form" id="documentNoteForm">
+            <h3>Prüfnotiz hinzufügen</h3>
+            <select name="kind">
+              <option value="Prüfnotiz">Prüfnotiz</option>
+              <option value="Freigabe">Freigabe</option>
+              <option value="Rückfrage">Rückfrage</option>
+              <option value="Ablehnung">Ablehnung</option>
+            </select>
+            <textarea name="body" placeholder="Notiz, Entscheidung oder Rückfrage dokumentieren" required></textarea>
+            <button class="secondary-button" type="submit">Notiz speichern</button>
+          </form>
+          <form class="quick-form detail-form" id="documentTaskForm">
+            <h3>Aufgabe zuweisen</h3>
+            <div class="task-suggestion-box" id="documentTaskSuggestion"></div>
+            <select name="assignee_id" id="documentTaskAssignee" required></select>
+            <select name="action">
+              <option value="Prüfen">Prüfen</option>
+              <option value="Freigeben">Freigeben</option>
+              <option value="Klären">Klären</option>
+              <option value="Zahlen">Zahlen</option>
+              <option value="Archivieren">Archivieren</option>
+            </select>
+            <select name="priority">
+              <option value="normal">Priorität normal</option>
+              <option value="hoch">Priorität hoch</option>
+              <option value="kritisch">Priorität kritisch</option>
+            </select>
+            <input name="due" type="text" placeholder="Fällig bis, z. B. 31.05.2026">
+            <textarea name="note" placeholder="Aufgabenhinweis für die verantwortliche Person"></textarea>
+            <div class="action-row inline task-form-actions">
+              <button class="primary-button" id="createSuggestedTaskBtn" type="button">KI-Vorschlag übernehmen</button>
+              <button class="secondary-button" type="submit">Manuelle Aufgabe anlegen</button>
+            </div>
+          </form>
+          <div class="document-tasks" id="documentTasks"></div>
+          <div class="approval-history" id="documentHistory"></div>
+        </section>
+        <section>
+          <h3>OCR / Analyse</h3>
+          <div class="analysis-box">
+            <div class="citation-nav" id="dialogCitationNav"></div>
+            <p id="dialogOcrText"></p>
+            <div class="source-row" id="dialogSource"></div>
+          </div>
+          <div class="action-row">
+            <button class="secondary-button" id="reprocessBtn" type="button">OCR neu ausführen</button>
+            <button class="secondary-button danger" id="archiveBtn" type="button">Archivieren</button>
+          </div>
+          <div class="preview-box" id="dialogPreview"></div>
+        </section>
+      </div>
+    </dialog>
+
+    <dialog class="detail-dialog password-dialog" id="passwordDialog">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">Sicherheit</p>
+          <h2>Passwort ändern</h2>
+        </div>
+        <button class="icon-button" id="closePasswordDialogBtn" type="button" aria-label="Schließen" title="Schließen">×</button>
+      </div>
+      <form class="quick-form detail-form" id="passwordForm">
+        <input name="current_password" type="password" placeholder="Aktuelles Passwort" autocomplete="current-password" required>
+        <input name="new_password" type="password" placeholder="Neues Passwort" autocomplete="new-password" minlength="10" required>
+        <input name="confirm_password" type="password" placeholder="Neues Passwort wiederholen" autocomplete="new-password" minlength="10" required>
+        <p class="auth-hint" id="passwordHint">Mindestens 12 Zeichen mit Großbuchstaben, Kleinbuchstaben, Zahl und Sonderzeichen.</p>
+        <div class="security-summary" id="sessionSecurityInfo"></div>
+        <div class="action-row">
+          <button class="primary-button" type="submit">Passwort speichern</button>
+          <button class="secondary-button" id="logoutAllBtn" type="button">Alle Geräte abmelden</button>
+        </div>
+      </form>
+    </dialog>
+    <div class="toast" id="toast" hidden></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
