@@ -705,9 +705,12 @@ function setSidebarCollapsed(collapsed) {
 
 function toast(message) {
   els.toast.textContent = message;
+  els.toast.classList.remove("is-visible");
   els.toast.hidden = false;
+  requestAnimationFrame(() => els.toast.classList.add("is-visible"));
   window.clearTimeout(toast.timer);
   toast.timer = window.setTimeout(() => {
+    els.toast.classList.remove("is-visible");
     els.toast.hidden = true;
   }, 2600);
 }
@@ -3443,6 +3446,7 @@ function openDocument(documentId, query = activeSearchQuery) {
   const doc = state.documents.find((item) => item.id === documentId);
   if (!doc) return;
   const analysis = parseAnalysis(doc);
+  const accounting = doc.type === "Rechnung" ? invoiceAccountingFields(doc) : null;
   activeDocumentId = doc.id;
   els.dialogTitle.textContent = doc.name;
   els.dialogFields.innerHTML = Object.entries({
@@ -3471,6 +3475,53 @@ function openDocument(documentId, query = activeSearchQuery) {
     <div class="source-list">${renderCitations(doc, query)}</div>
   `;
   renderCitationNav(doc);
+  const quickFacts = document.querySelector("#dialogQuickFacts");
+  if (quickFacts) {
+    quickFacts.innerHTML = [
+      ["Bauakte", projectName(doc.project_id)],
+      ["Workflow", workflowInfo(doc.status).label],
+      ["Frist", doc.due || "keine"],
+      ["Risiko", riskText(doc)],
+      ["KI-Sicherheit", `${doc.confidence || 0}%`],
+      ...(accounting ? [
+        ["Rechnung", accounting.invoiceNumber || "offen"],
+        ["Brutto", accounting.gross ? formatCurrency(accounting.gross) : "offen"],
+        ["Konto", accounting.bookingAccount || "offen"]
+      ] : [])
+    ].map(([label, value]) => `
+      <article>
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(value)}</strong>
+      </article>
+    `).join("");
+  }
+  const decisionPanel = document.querySelector("#dialogDecisionPanel");
+  if (decisionPanel) {
+    const openTasks = openDocumentTasks(doc.id);
+    decisionPanel.innerHTML = `
+      <div>
+        <p class="eyebrow">Entscheidung</p>
+        <h3>${escapeHtml(nextDocumentAction(doc))}</h3>
+        <span>${openTasks.length ? `${openTasks.length} offene Aufgabe(n) vorhanden` : "Keine offene Aufgabe zu diesem Dokument"}</span>
+      </div>
+      <div class="decision-actions">
+        <button class="secondary-button approval-action-btn" type="button" data-approval-action="review">Prüfen</button>
+        <button class="secondary-button approval-action-btn" type="button" data-approval-action="approve">Freigeben</button>
+        ${doc.type === "Rechnung" ? `<button class="primary-button approval-action-btn" type="button" data-approval-action="payment">Zur Zahlung</button>` : ""}
+      </div>
+    `;
+    decisionPanel.querySelectorAll(".approval-action-btn").forEach((button) => {
+      button.addEventListener("click", async () => {
+        try {
+          await refresh(await api.runApprovalAction({ id: doc.id, action: button.dataset.approvalAction }));
+          toast("Freigabe-Workflow aktualisiert.");
+          openDocument(doc.id);
+        } catch {
+          toast("Freigabe konnte nicht gespeichert werden.");
+        }
+      });
+    });
+  }
   const statusSelect = els.documentStatusForm.status;
   const statusKnown = Array.from(statusSelect.options).some((option) => option.value === doc.status);
   statusSelect.value = statusKnown ? doc.status : "offen";
