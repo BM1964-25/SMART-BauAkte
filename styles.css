@@ -3670,6 +3670,261 @@ button:focus-visible {
   background: #f4f8ff;
 }
 
+.command-center {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0 0 18px;
+}
+
+.command-column {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--soft-shadow);
+}
+
+.command-list,
+.dossier-list,
+.quality-checks {
+  display: grid;
+  gap: 8px;
+}
+
+.command-item,
+.dossier-row {
+  width: 100%;
+  padding: 10px 0 10px 12px;
+  display: grid;
+  gap: 3px;
+  border: 0;
+  border-left: 3px solid var(--accent);
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.command-item:first-child,
+.dossier-row:first-child {
+  border-top: 0;
+}
+
+.command-item:hover,
+.dossier-row:hover {
+  background: #f6faff;
+}
+
+.command-item span,
+.command-item small,
+.dossier-row span,
+.dossier-row small,
+.command-empty span,
+.dossier-empty span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+
+.command-item strong,
+.dossier-row strong,
+.command-empty strong,
+.dossier-empty strong {
+  display: block;
+}
+
+.command-item.risk,
+.dossier-row.risk,
+.dossier-row.überfällig,
+.dossier-row.heute,
+.dossier-row.kritisch {
+  border-left-color: var(--danger);
+}
+
+.command-item.warn,
+.dossier-row.warn,
+.dossier-row.hoch {
+  border-left-color: var(--warning);
+}
+
+.command-item.ok,
+.dossier-row.ok {
+  border-left-color: var(--success);
+}
+
+.command-empty,
+.dossier-empty {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.dossier-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-subtle);
+  overflow-x: auto;
+}
+
+.dossier-tabs button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.dossier-tabs button.active,
+.dossier-tabs button:hover {
+  background: #ffffff;
+  color: var(--primary);
+  box-shadow: var(--soft-shadow);
+}
+
+.dossier-panel {
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.dossier-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.dossier-grid article {
+  min-height: 104px;
+  padding: 14px;
+  border-right: 1px solid var(--line);
+  background: var(--panel-subtle);
+}
+
+.dossier-grid article:last-child {
+  border-right: 0;
+}
+
+.dossier-grid span,
+.dossier-grid small {
+  display: block;
+  color: var(--muted);
+}
+
+.dossier-grid strong {
+  display: block;
+  margin: 6px 0 4px;
+  font-size: 1.18rem;
+}
+
+.invoice-pipeline {
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.pipeline-step {
+  min-height: 82px;
+  padding: 12px;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  border-right: 1px solid var(--line);
+}
+
+.pipeline-step:last-child {
+  border-right: 0;
+}
+
+.pipeline-step span {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #edf3fa;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.pipeline-step.active span {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.pipeline-step small {
+  color: var(--muted);
+  font-weight: 760;
+}
+
+.invoice-quality-panel {
+  grid-column: 1;
+  display: grid;
+  grid-template-columns: minmax(180px, 0.32fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f8fbff, #ffffff);
+}
+
+.invoice-quality-panel span,
+.invoice-quality-panel strong {
+  display: block;
+}
+
+.invoice-quality-panel span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.quality-checks {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.quality-chip {
+  min-height: 34px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.quality-chip.ok {
+  border-color: #bfe3eb;
+  background: #effbfe;
+  color: #0b5364;
+}
+
+.quality-chip.warn {
+  border-color: #edd39d;
+  background: #fff8e8;
+  color: #87510f;
+}
+
 @media (max-width: 1360px) {
   .invoice-panel {
     grid-template-columns: 1fr;
@@ -3677,7 +3932,9 @@ button:focus-visible {
 
   .invoice-panel > .panel-head,
   .invoice-metrics,
+  .invoice-pipeline,
   .invoice-toolbar,
+  .invoice-quality-panel,
   .invoice-rule-panel,
   .invoice-table {
     grid-column: 1;
@@ -3750,6 +4007,7 @@ button:focus-visible {
 
   .app-header,
   .kpi-grid,
+  .command-center,
   .dashboard-grid,
   .inbox-workflow,
   .assistant-layout,
@@ -3758,10 +4016,14 @@ button:focus-visible {
   .project-command,
   .project-cockpit-grid,
   .document-filterbar,
+  .dossier-grid,
   .inbox-center-metrics,
   .inbox-toolbar,
   .inbox-batch-panel,
   .invoice-metrics,
+  .invoice-pipeline,
+  .invoice-quality-panel,
+  .quality-checks,
   .invoice-toolbar,
   .invoice-rule-form,
   .task-overview,
@@ -3820,19 +4082,14 @@ button:focus-visible {
   }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 900px) {
   .app-shell {
     --sidebar-width: 72px;
-  }
-
-  .main-app {
-    padding: 12px;
   }
 
   .sidebar {
     padding: 16px 8px;
     align-items: center;
-    gap: 18px;
   }
 
   .brand {
@@ -3862,6 +4119,16 @@ button:focus-visible {
     width: 44px;
     padding: 14px 0;
     justify-content: center;
+  }
+}
+
+@media (max-width: 680px) {
+  .main-app {
+    padding: 12px;
+  }
+
+  .sidebar {
+    gap: 18px;
   }
 
   .project-summary,

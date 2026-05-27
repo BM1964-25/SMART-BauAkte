@@ -142,6 +142,30 @@
             </article>
           </div>
 
+          <section class="command-center" aria-label="Kommandozentrale">
+            <div class="command-column">
+              <div class="mini-head">
+                <span>Heute</span>
+                <strong>Prioritäten</strong>
+              </div>
+              <div class="command-list" id="commandToday"></div>
+            </div>
+            <div class="command-column">
+              <div class="mini-head">
+                <span>Eingang</span>
+                <strong>Prüfqueue</strong>
+              </div>
+              <div class="command-list" id="commandQueue"></div>
+            </div>
+            <div class="command-column">
+              <div class="mini-head">
+                <span>Finanzen</span>
+                <strong>Rechnungen</strong>
+              </div>
+              <div class="command-list" id="commandFinance"></div>
+            </div>
+          </section>
+
           <div class="dashboard-grid">
             <section class="panel">
               <div class="panel-head">
@@ -253,6 +277,13 @@
                 <div class="project-metrics" id="projectMetrics"></div>
                 <div class="project-insight" id="projectInsight"></div>
               </div>
+              <div class="dossier-tabs" aria-label="Bauakte Dossier">
+                <button class="active" type="button" data-project-tab="overview">Dossier</button>
+                <button type="button" data-project-tab="documents">Dokumente</button>
+                <button type="button" data-project-tab="tasks">Aufgaben</button>
+                <button type="button" data-project-tab="timeline">Historie</button>
+              </div>
+              <section class="dossier-panel" id="projectDossierPanel" aria-live="polite"></section>
               <div class="project-cockpit-grid">
                 <section class="cockpit-section">
                   <div class="mini-head">
@@ -405,6 +436,7 @@
               </div>
             </div>
             <div class="invoice-metrics" id="invoiceMetricPanel"></div>
+            <div class="invoice-pipeline" id="invoicePipeline" aria-label="Rechnungsworkflow"></div>
             <div class="invoice-toolbar">
               <input id="invoiceSearch" type="search" placeholder="Rechnung, Bauakte, Betrag oder Lieferant suchen">
               <select id="invoiceStatusFilter">
@@ -420,6 +452,7 @@
                 <option value="all">Alle Bauakten</option>
               </select>
             </div>
+            <div class="invoice-quality-panel" id="invoiceQualityPanel"></div>
             <div class="invoice-rule-panel">
               <div class="mini-head">
                 <span>Automatisierung</span>

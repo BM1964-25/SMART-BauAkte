@@ -445,6 +445,8 @@ const els = {
   projectTitle: document.querySelector("#projectTitle"),
   projectMetrics: document.querySelector("#projectMetrics"),
   projectInsight: document.querySelector("#projectInsight"),
+  projectDossierPanel: document.querySelector("#projectDossierPanel"),
+  projectDossierTabs: document.querySelectorAll("[data-project-tab]"),
   projectStatusStack: document.querySelector("#projectStatusStack"),
   projectOpenTasks: document.querySelector("#projectOpenTasks"),
   projectUpcomingDeadlines: document.querySelector("#projectUpcomingDeadlines"),
@@ -458,6 +460,9 @@ const els = {
   clearDocumentFiltersBtn: document.querySelector("#clearDocumentFiltersBtn"),
   inboxList: document.querySelector("#inboxList"),
   uploadReviewList: document.querySelector("#uploadReviewList"),
+  commandToday: document.querySelector("#commandToday"),
+  commandQueue: document.querySelector("#commandQueue"),
+  commandFinance: document.querySelector("#commandFinance"),
   inboxCenterMetrics: document.querySelector("#inboxCenterMetrics"),
   inboxSearch: document.querySelector("#inboxSearch"),
   inboxTypeFilter: document.querySelector("#inboxTypeFilter"),
@@ -469,6 +474,8 @@ const els = {
   batchDueInput: document.querySelector("#batchDueInput"),
   applyInboxBatchBtn: document.querySelector("#applyInboxBatchBtn"),
   invoiceMetricPanel: document.querySelector("#invoiceMetricPanel"),
+  invoicePipeline: document.querySelector("#invoicePipeline"),
+  invoiceQualityPanel: document.querySelector("#invoiceQualityPanel"),
   invoiceSearch: document.querySelector("#invoiceSearch"),
   invoiceStatusFilter: document.querySelector("#invoiceStatusFilter"),
   invoiceProjectFilter: document.querySelector("#invoiceProjectFilter"),
@@ -604,6 +611,7 @@ let invoiceQuery = "";
 let invoiceStatusFilter = "all";
 let invoiceProjectFilter = "all";
 let editingInvoiceId = null;
+let projectDossierTab = "overview";
 const dismissedNotifications = new Set(JSON.parse(localStorage.getItem("bauakte_dismissed_notifications") || "[]"));
 
 function escapeHtml(value = "") {
@@ -1719,6 +1727,85 @@ async function runOnboardingAction(action) {
   }
 }
 
+function commandButton(item) {
+  return `
+    <button class="command-item ${item.tone || "ok"}" type="button" ${item.documentId ? `data-document="${item.documentId}"` : ""} ${item.viewId ? `data-view-target="${item.viewId}"` : ""}>
+      <span>${escapeHtml(item.kicker || "Aktion")}</span>
+      <strong>${escapeHtml(item.title)}</strong>
+      <small>${escapeHtml(item.text || "")}</small>
+    </button>
+  `;
+}
+
+function bindCommandButtons(root) {
+  root?.querySelectorAll(".command-item").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.document) openDocument(button.dataset.document);
+      if (button.dataset.viewTarget) switchView(button.dataset.viewTarget);
+    });
+  });
+}
+
+function renderCommandCenter() {
+  if (!els.commandToday || !els.commandQueue || !els.commandFinance) return;
+  const urgentTasks = (state.document_tasks || [])
+    .filter((task) => task.status !== "erledigt")
+    .sort(compareTasks)
+    .slice(0, 3)
+    .map((task) => {
+      const doc = documentById(task.document_id);
+      return {
+        tone: taskTone(task),
+        kicker: taskPriorityLabel(task),
+        title: `${task.action}: ${task.assignee_name || "offen"}`,
+        text: `${task.due || "ohne Frist"} · ${doc?.name || "Dokument"}`,
+        documentId: task.document_id
+      };
+    });
+  const urgentDeadlines = (state.deadlines || [])
+    .filter((deadline) => deadline.tone === "risk" || ["überfällig", "heute"].includes(deadlineUrgency(deadline)))
+    .slice(0, 3)
+    .map((deadline) => ({
+      tone: deadline.tone === "risk" ? "risk" : "warn",
+      kicker: deadline.date_label || "Frist",
+      title: deadline.title,
+      text: deadline.detail || "ohne Detail",
+      viewId: "fristen"
+    }));
+  const queueItems = inboxCenterItems().slice(0, 4).map((item) => ({
+    tone: item.tone,
+    kicker: item.kind === "email" ? "E-Mail" : item.project,
+    title: item.title,
+    text: item.meta,
+    documentId: item.kind === "document" ? item.id : "",
+    viewId: item.kind === "email" ? "inbox" : ""
+  }));
+  const financeItems = invoiceRows()
+    .filter((row) => row.doc.status !== "bezahlt")
+    .sort((a, b) => (a.dueState === "risk" ? -1 : 0) - (b.dueState === "risk" ? -1 : 0))
+    .slice(0, 4)
+    .map((row) => ({
+      tone: row.dueState,
+      kicker: row.accounting.gross ? formatCurrency(row.accounting.gross) : "Betrag offen",
+      title: row.accounting.creditor || row.doc.name,
+      text: `${projectName(row.doc.project_id)} · ${invoiceDueLabel(row.doc)} · ${invoiceApprovalLabel(row.doc)}`,
+      documentId: row.doc.id
+    }));
+
+  els.commandToday.innerHTML = [...urgentTasks, ...urgentDeadlines].slice(0, 4).map(commandButton).join("") || `
+    <article class="command-empty"><strong>Keine akuten Punkte</strong><span>Heute sind keine kritischen Aufgaben oder Fristen offen.</span></article>
+  `;
+  els.commandQueue.innerHTML = queueItems.map(commandButton).join("") || `
+    <article class="command-empty"><strong>Eingang leer</strong><span>Neue Uploads und E-Mails erscheinen hier.</span></article>
+  `;
+  els.commandFinance.innerHTML = financeItems.map(commandButton).join("") || `
+    <article class="command-empty"><strong>Keine offenen Rechnungen</strong><span>Freigaben und Zahlungsläufe erscheinen hier.</span></article>
+  `;
+  bindCommandButtons(els.commandToday);
+  bindCommandButtons(els.commandQueue);
+  bindCommandButtons(els.commandFinance);
+}
+
 function hasPermission(permission) {
   return state.permissions?.includes(permission);
 }
@@ -1879,6 +1966,88 @@ function renderProjectDashboard() {
   }
 
   document.querySelectorAll(".compact-row[data-document]").forEach((row) => {
+    row.addEventListener("click", () => openDocument(row.dataset.document));
+  });
+  renderProjectDossier(project, docs, openTasks, deadlines);
+}
+
+function renderProjectDossier(project, docs = [], openTasks = [], deadlines = []) {
+  if (!els.projectDossierPanel) return;
+  els.projectDossierTabs.forEach((button) => {
+    button.classList.toggle("active", button.dataset.projectTab === projectDossierTab);
+  });
+  if (!project) {
+    els.projectDossierPanel.innerHTML = `<article class="dossier-empty"><strong>Keine Bauakte gewählt</strong><span>Eine Bauakte auswählen oder neu anlegen.</span></article>`;
+    return;
+  }
+  const riskDocs = docs.filter((doc) => doc.tone === "risk");
+  const exportDocs = docs.filter((doc) => ["geprüft", "freigegeben", "bezahlt", "erledigt"].includes(doc.status));
+  const sortedDocs = [...docs].sort((a, b) => {
+    const toneRank = { risk: 0, warn: 1, ok: 2 };
+    return (toneRank[a.tone] ?? 2) - (toneRank[b.tone] ?? 2) || (b.created_at || 0) - (a.created_at || 0);
+  });
+  const timeline = [
+    ...docs.map((doc) => ({ at: doc.created_at || 0, title: doc.name, text: `${doc.type} · ${workflowInfo(doc.status).label}`, documentId: doc.id })),
+    ...openTasks.map((task) => ({ at: task.created_at || 0, title: `Aufgabe: ${task.action}`, text: `${task.assignee_name} · ${taskPriorityLabel(task)} · ${task.due || "ohne Frist"}`, documentId: task.document_id })),
+    ...deadlines.map((deadline) => ({ at: deadline.created_at || 0, title: `Frist: ${deadline.title}`, text: `${deadline.date_label} · ${deadline.detail || project.name}` }))
+  ].sort((a, b) => b.at - a.at);
+
+  const tabTemplates = {
+    overview: `
+      <div class="dossier-grid">
+        <article>
+          <span>Bauherr / Kunde</span>
+          <strong>${escapeHtml(project.customer || "offen")}</strong>
+          <small>${escapeHtml(project.address || "Adresse offen")}</small>
+        </article>
+        <article>
+          <span>Dokumentenreife</span>
+          <strong>${docs.length ? Math.round((exportDocs.length / docs.length) * 100) : 0}%</strong>
+          <small>${exportDocs.length}/${docs.length} Dokumente im geprüften Workflow</small>
+        </article>
+        <article>
+          <span>Risikolage</span>
+          <strong>${riskDocs.length ? `${riskDocs.length} kritisch` : "stabil"}</strong>
+          <small>${openTasks.length} offene Aufgabe(n), ${deadlines.length} Frist(en)</small>
+        </article>
+      </div>
+    `,
+    documents: `
+      <div class="dossier-list">
+        ${sortedDocs.slice(0, 6).map((doc) => `
+          <button class="dossier-row ${doc.tone}" type="button" data-document="${doc.id}">
+            <strong>${escapeHtml(doc.name)}</strong>
+            <span>${escapeHtml(doc.type)} · ${escapeHtml(workflowInfo(doc.status).label)} · ${doc.due || "keine Frist"}</span>
+          </button>
+        `).join("") || `<article class="dossier-empty"><strong>Keine Dokumente</strong><span>Neue Uploads erscheinen hier.</span></article>`}
+      </div>
+    `,
+    tasks: `
+      <div class="dossier-list">
+        ${openTasks.slice(0, 8).map((task) => {
+          const doc = documentById(task.document_id);
+          return `
+            <button class="dossier-row ${taskTone(task)}" type="button" data-document="${task.document_id}">
+              <strong>${escapeHtml(task.action)} · ${escapeHtml(task.assignee_name || "offen")}</strong>
+              <span>${escapeHtml(taskPriorityLabel(task))} · ${escapeHtml(task.due || "ohne Frist")} · ${escapeHtml(doc?.name || "Dokument")}</span>
+            </button>
+          `;
+        }).join("") || `<article class="dossier-empty"><strong>Keine offenen Aufgaben</strong><span>Diese Bauakte ist aktuell nicht blockiert.</span></article>`}
+      </div>
+    `,
+    timeline: `
+      <div class="dossier-list">
+        ${timeline.slice(0, 8).map((item) => `
+          <${item.documentId ? "button" : "article"} class="dossier-row" ${item.documentId ? `type="button" data-document="${item.documentId}"` : ""}>
+            <strong>${escapeHtml(item.title)}</strong>
+            <span>${escapeHtml(item.text)} · ${item.at ? formatDateTime(item.at) : "ohne Zeit"}</span>
+          </${item.documentId ? "button" : "article"}>
+        `).join("") || `<article class="dossier-empty"><strong>Noch keine Historie</strong><span>Aktivität erscheint hier.</span></article>`}
+      </div>
+    `
+  };
+  els.projectDossierPanel.innerHTML = tabTemplates[projectDossierTab] || tabTemplates.overview;
+  els.projectDossierPanel.querySelectorAll("[data-document]").forEach((row) => {
     row.addEventListener("click", () => openDocument(row.dataset.document));
   });
 }
@@ -2107,6 +2276,51 @@ function renderInvoices() {
         <strong>${value}</strong>
       </article>
     `).join("");
+  }
+
+  if (els.invoicePipeline) {
+    const stages = [
+      ["Eingang", allRows.filter((row) => ["offen", "prüfen", "klären", "Eingang"].includes(row.doc.status) || !row.doc.reviewed_by).length],
+      ["Geprüft", allRows.filter((row) => row.doc.reviewed_by || row.doc.status === "geprüft").length],
+      ["Freigegeben", allRows.filter((row) => row.doc.approved_by || row.doc.status === "freigegeben").length],
+      ["Zahlung", allRows.filter((row) => ["zur_zahlung", "bezahlt"].includes(row.doc.status)).length],
+      ["Export", exportReadyCount]
+    ];
+    els.invoicePipeline.innerHTML = stages.map(([label, count], index) => `
+      <article class="pipeline-step ${count ? "active" : ""}">
+        <span>${index + 1}</span>
+        <strong>${escapeHtml(label)}</strong>
+        <small>${count} Rechnung(en)</small>
+      </article>
+    `).join("");
+  }
+
+  if (els.invoiceQualityPanel) {
+    const missingNumber = allRows.filter((row) => !row.accounting.invoiceNumber).length;
+    const missingIban = allRows.filter((row) => !row.accounting.iban).length;
+    const missingAccount = allRows.filter((row) => !row.accounting.bookingAccount).length;
+    const missingGross = allRows.filter((row) => !row.accounting.gross).length;
+    const conflicts = allRows.filter((row) => row.accounting.ruleConflict).length;
+    const checks = [
+      ["Rechnungsnummer", missingNumber],
+      ["IBAN", missingIban],
+      ["Buchungskonto", missingAccount],
+      ["Bruttobetrag", missingGross],
+      ["Regelkonflikt", conflicts]
+    ];
+    els.invoiceQualityPanel.innerHTML = `
+      <div>
+        <span>Qualitätsprüfung</span>
+        <strong>${exportReadyCount}/${allRows.length || 0} exportfähig</strong>
+      </div>
+      <div class="quality-checks">
+        ${checks.map(([label, count]) => `
+          <button class="quality-chip ${count ? "warn" : "ok"}" type="button" data-quality="${escapeHtml(label)}">
+            ${escapeHtml(label)} ${count ? `${count} offen` : "ok"}
+          </button>
+        `).join("")}
+      </div>
+    `;
   }
 
   if (els.invoiceSearch) els.invoiceSearch.value = invoiceQuery;
@@ -3368,6 +3582,7 @@ function openDocument(documentId, query = activeSearchQuery) {
 }
 
 function renderAll() {
+  renderCommandCenter();
   renderProjectList();
   renderProjectDashboard();
   renderDocuments();
@@ -4061,6 +4276,12 @@ els.projectForm.addEventListener("submit", async (event) => {
   els.projectForm.reset();
   await refresh(nextState);
   toast("Bauakte angelegt.");
+});
+els.projectDossierTabs?.forEach((button) => {
+  button.addEventListener("click", () => {
+    projectDossierTab = button.dataset.projectTab || "overview";
+    renderProjectDashboard();
+  });
 });
 els.deadlineForm.addEventListener("submit", async (event) => {
   event.preventDefault();
