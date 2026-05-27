@@ -1086,10 +1086,29 @@ function matchedInvoiceRule(doc) {
     .find((rule) => haystack.includes(String(rule.keyword).toLowerCase())) || null;
 }
 
+function matchingInvoiceRules(doc) {
+  const haystack = invoiceSourceText(doc).toLowerCase();
+  return activeInvoiceRules()
+    .filter((rule) => haystack.includes(String(rule.keyword).toLowerCase()))
+    .sort((a, b) => String(b.keyword).length - String(a.keyword).length);
+}
+
+function invoiceRuleStats(rule) {
+  const invoices = (state.documents || []).filter(isInvoiceDocument);
+  const affected = invoices.filter((doc) => invoiceSourceText(doc).toLowerCase().includes(String(rule.keyword || "").toLowerCase()));
+  const conflicts = affected.filter((doc) => matchingInvoiceRules(doc).length > 1);
+  return {
+    affected: affected.length,
+    conflicts: conflicts.length,
+    examples: affected.slice(0, 3).map((doc) => doc.name)
+  };
+}
+
 function invoiceAccountingFields(doc) {
   const text = invoiceSourceText(doc);
   const manual = doc.invoice_fields || {};
   const rule = matchedInvoiceRule(doc);
+  const ruleMatches = matchingInvoiceRules(doc);
   const gross = parseInvoiceAmount(doc);
   const explicitNet = parseMoneyFromText(text, /(?:netto|nettosumme|warenwert)[^\d]{0,24}(\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})|\d+(?:,\d{2}))/i);
   const explicitTax = parseMoneyFromText(text, /(?:mwst|ust|umsatzsteuer|steuerbetrag|steuer)[^\d]{0,24}(\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})|\d+(?:,\d{2}))/i);
@@ -1116,6 +1135,7 @@ function invoiceAccountingFields(doc) {
     verifiedBy: manual.verified_by || "",
     verifiedAt: manual.verified_at || null,
     ruleLabel: rule ? `${rule.keyword} → ${rule.booking_account}` : "",
+    ruleConflict: ruleMatches.length > 1 ? `${ruleMatches.length} passende Regeln` : "",
     projectName: project?.name || projectName(doc.project_id),
     exportReady: Boolean(finalGross && doc.due && doc.due !== "keine" && doc.project_id && (manual.invoice_number || extractInvoiceNumber(doc)))
   };
@@ -1270,11 +1290,13 @@ function renderInvoiceRules() {
   const rules = state.invoice_booking_rules || [];
   els.invoiceRuleList.innerHTML = rules.map((rule) => {
     const active = Number(rule.is_active) !== 0;
+    const stats = invoiceRuleStats(rule);
     return `
-    <article class="${active ? "" : "inactive"}">
+    <article class="${active ? "" : "inactive"} ${stats.conflicts ? "conflict" : ""}">
       <div>
         <strong>${escapeHtml(rule.keyword)}</strong>
         <span>${escapeHtml(rule.booking_account)} · ${escapeHtml(rule.label || "Regel")} · ${Number(rule.tax_rate || 19)}%${active ? "" : " · inaktiv"}</span>
+        <small>${stats.affected} Treffer${stats.conflicts ? ` · ${stats.conflicts} Konflikt(e)` : ""}${stats.examples.length ? ` · ${stats.examples.map(escapeHtml).join(", ")}` : ""}</small>
       </div>
       <div class="invoice-rule-actions">
         <button class="secondary-button edit-invoice-rule-btn" type="button" data-rule="${rule.id}">Bearbeiten</button>
@@ -2164,7 +2186,7 @@ function renderInvoices() {
         <button class="invoice-main" type="button" data-document="${doc.id}">
           <strong>${escapeHtml(doc.name)}</strong>
           <span>${escapeHtml(invoiceApprovalLabel(doc))} · ${escapeHtml(accounting.creditor)}</span>
-          <small class="invoice-accounting">${escapeHtml(accounting.invoiceNumber)} · Konto ${escapeHtml(accounting.bookingAccount || "offen")} · ${accounting.ruleLabel ? `Regel ${escapeHtml(accounting.ruleLabel)} · ` : ""}Netto ${accounting.net ? formatCurrency(accounting.net) : "offen"} · Steuer ${accounting.tax ? formatCurrency(accounting.tax) : "offen"} · ${accounting.iban || "IBAN offen"}</small>
+          <small class="invoice-accounting">${escapeHtml(accounting.invoiceNumber)} · Konto ${escapeHtml(accounting.bookingAccount || "offen")} · ${accounting.ruleLabel ? `Regel ${escapeHtml(accounting.ruleLabel)} · ` : ""}${accounting.ruleConflict ? `Konflikt: ${escapeHtml(accounting.ruleConflict)} · ` : ""}Netto ${accounting.net ? formatCurrency(accounting.net) : "offen"} · Steuer ${accounting.tax ? formatCurrency(accounting.tax) : "offen"} · ${accounting.iban || "IBAN offen"}</small>
         </button>
         <span>${escapeHtml(projectName(doc.project_id))}</span>
         <strong>${accounting.gross ? formatCurrency(accounting.gross) : "Betrag offen"}</strong>

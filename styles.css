@@ -1050,8 +1050,14 @@ h3 {
   opacity: 0.62;
 }
 
+.invoice-rule-list article.conflict {
+  border-color: #e1ad54;
+  background: #fff8eb;
+}
+
 .invoice-rule-list strong,
-.invoice-rule-list span {
+.invoice-rule-list span,
+.invoice-rule-list small {
   display: block;
   font-size: 0.8rem;
 }
@@ -1064,6 +1070,17 @@ h3 {
   margin-top: 3px;
   color: var(--muted);
   font-weight: 750;
+}
+
+.invoice-rule-list small {
+  margin-top: 4px;
+  color: #5e6f83;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.invoice-rule-list article.conflict small {
+  color: #8a5a08;
 }
 
 .invoice-rule-actions {
