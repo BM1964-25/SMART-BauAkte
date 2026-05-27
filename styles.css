@@ -325,6 +325,62 @@ button {
   box-shadow: var(--shadow);
 }
 
+.demo-guide {
+  position: sticky;
+  top: 96px;
+  z-index: 11;
+  margin: -4px 0 18px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  border: 1px solid #b9cce5;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+.demo-guide-main {
+  display: grid;
+  gap: 3px;
+}
+
+.demo-guide-main span {
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.demo-guide-main strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.demo-guide-main p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 760;
+}
+
+.demo-guide-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.demo-highlight {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid rgba(31, 95, 191, 0.32);
+  outline-offset: 5px;
+  box-shadow: 0 0 0 8px rgba(31, 95, 191, 0.08), var(--shadow);
+}
+
 .search-result-list {
   display: grid;
   gap: 8px;

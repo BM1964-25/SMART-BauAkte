@@ -111,12 +111,25 @@
                 <div class="notification-list" id="notificationList"></div>
               </section>
             </div>
+            <button class="secondary-button" id="demoGuideBtn" type="button">Demo führen</button>
             <button class="secondary-button" id="passwordBtn" type="button">Passwort ändern</button>
             <button class="secondary-button" id="logoutBtn" type="button">Abmelden</button>
             <button class="primary-button" id="newDocBtn" type="button">Dokument prüfen</button>
           </div>
         </header>
         <section class="search-results" id="searchResults" hidden aria-live="polite"></section>
+        <section class="demo-guide" id="demoGuide" hidden aria-live="polite">
+          <div class="demo-guide-main">
+            <span id="demoGuideStep">Schritt 1/7</span>
+            <strong id="demoGuideTitle">Demo starten</strong>
+            <p id="demoGuideText">SMART BauAkte führt durch den Kernprozess.</p>
+          </div>
+          <div class="demo-guide-actions">
+            <button class="secondary-button" id="demoGuidePrev" type="button">Zurück</button>
+            <button class="primary-button" id="demoGuideNext" type="button">Weiter</button>
+            <button class="secondary-button" id="demoGuideClose" type="button">Schließen</button>
+          </div>
+        </section>
 
         <section class="view active" id="dashboard" data-title="Übersicht">
           <div class="kpi-grid">

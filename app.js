@@ -502,6 +502,14 @@ const els = {
   analyzeBtn: document.querySelector("#analyzeBtn"),
   acceptSuggestion: document.querySelector("#acceptSuggestion"),
   rejectSuggestion: document.querySelector("#rejectSuggestion"),
+  demoGuideBtn: document.querySelector("#demoGuideBtn"),
+  demoGuide: document.querySelector("#demoGuide"),
+  demoGuideStep: document.querySelector("#demoGuideStep"),
+  demoGuideTitle: document.querySelector("#demoGuideTitle"),
+  demoGuideText: document.querySelector("#demoGuideText"),
+  demoGuidePrev: document.querySelector("#demoGuidePrev"),
+  demoGuideNext: document.querySelector("#demoGuideNext"),
+  demoGuideClose: document.querySelector("#demoGuideClose"),
   newDocBtn: document.querySelector("#newDocBtn"),
   logoutBtn: document.querySelector("#logoutBtn"),
   passwordBtn: document.querySelector("#passwordBtn"),
@@ -612,6 +620,8 @@ let invoiceStatusFilter = "all";
 let invoiceProjectFilter = "all";
 let editingInvoiceId = null;
 let projectDossierTab = "overview";
+let demoGuideIndex = 0;
+let demoGuideActive = false;
 const dismissedNotifications = new Set(JSON.parse(localStorage.getItem("bauakte_dismissed_notifications") || "[]"));
 
 function escapeHtml(value = "") {
@@ -713,6 +723,81 @@ function toast(message) {
     els.toast.classList.remove("is-visible");
     els.toast.hidden = true;
   }, 2600);
+}
+
+const demoGuideSteps = [
+  {
+    view: "dashboard",
+    target: ".command-center",
+    title: "Arbeitscockpit verstehen",
+    text: "Hier sieht der Nutzer sofort, was heute wichtig ist: kritische Aufgaben, neue Eingänge und offene Rechnungen."
+  },
+  {
+    view: "inbox",
+    target: ".upload-panel",
+    title: "Dokument kommt rein",
+    text: "Eingehende PDF-, Bild- oder Textdateien werden hier gesammelt hochgeladen und für OCR/KI vorbereitet."
+  },
+  {
+    view: "inbox",
+    target: ".inbox-review-panel",
+    title: "KI schlägt Bauakte und Aufgabe vor",
+    text: "Das Eingangscenter bündelt Uploads und E-Mails. Der Nutzer prüft Zuordnung, Kategorie, Frist und nächste Aktion."
+  },
+  {
+    view: "bauakten",
+    target: ".dossier-panel",
+    title: "Bauakte als Dossier",
+    text: "Die Bauakte zeigt Kunde, Reifegrad, Risiken, Dokumente, Aufgaben und Historie in einem prüfbaren Dossier."
+  },
+  {
+    view: "rechnungen",
+    target: ".invoice-quality-panel",
+    title: "Rechnungen prüfbar machen",
+    text: "Rechnungsnummer, IBAN, Betrag, Buchungskonto und Regelkonflikte werden vor dem Export sichtbar geprüft."
+  },
+  {
+    view: "rechnungen",
+    target: ".invoice-pipeline",
+    title: "Freigabe bis Zahlung",
+    text: "Die Pipeline zeigt, ob Rechnungen im Eingang, geprüft, freigegeben, zur Zahlung oder exportfähig sind."
+  },
+  {
+    view: "admin",
+    target: "#systemScorePanel",
+    title: "Produktreife prüfen",
+    text: "Im Admin-Bereich sieht der Betreiber Systemcheck, Datenschutz, Backup, Rollen, E-Mail und Verkaufsversion-Risiken."
+  }
+];
+
+function clearDemoHighlight() {
+  document.querySelectorAll(".demo-highlight").forEach((node) => node.classList.remove("demo-highlight"));
+}
+
+function showDemoStep(index = demoGuideIndex) {
+  if (!els.demoGuide) return;
+  demoGuideActive = true;
+  demoGuideIndex = Math.max(0, Math.min(index, demoGuideSteps.length - 1));
+  const step = demoGuideSteps[demoGuideIndex];
+  switchView(step.view);
+  els.demoGuide.hidden = false;
+  els.demoGuideStep.textContent = `Schritt ${demoGuideIndex + 1}/${demoGuideSteps.length}`;
+  els.demoGuideTitle.textContent = step.title;
+  els.demoGuideText.textContent = step.text;
+  els.demoGuidePrev.disabled = demoGuideIndex === 0;
+  els.demoGuideNext.textContent = demoGuideIndex === demoGuideSteps.length - 1 ? "Fertig" : "Weiter";
+  window.setTimeout(() => {
+    clearDemoHighlight();
+    const target = document.querySelector(step.target);
+    target?.classList.add("demo-highlight");
+    target?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, 80);
+}
+
+function closeDemoGuide() {
+  demoGuideActive = false;
+  if (els.demoGuide) els.demoGuide.hidden = true;
+  clearDemoHighlight();
 }
 
 function activeProject() {
@@ -3697,6 +3782,17 @@ function runGlobalSearch() {
 }
 
 els.navItems.forEach((item) => item.addEventListener("click", () => switchView(item.dataset.view)));
+els.demoGuideBtn?.addEventListener("click", () => showDemoStep(0));
+els.demoGuidePrev?.addEventListener("click", () => showDemoStep(demoGuideIndex - 1));
+els.demoGuideNext?.addEventListener("click", () => {
+  if (demoGuideIndex >= demoGuideSteps.length - 1) {
+    closeDemoGuide();
+    toast("Demo-Führung abgeschlossen.");
+    return;
+  }
+  showDemoStep(demoGuideIndex + 1);
+});
+els.demoGuideClose?.addEventListener("click", closeDemoGuide);
 els.sidebarToggle?.addEventListener("click", () => {
   const collapsed = !document.querySelector(".app-shell").classList.contains("sidebar-collapsed");
   setSidebarCollapsed(collapsed);

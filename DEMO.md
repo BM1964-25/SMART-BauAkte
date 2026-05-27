@@ -34,6 +34,8 @@ Im Dashboard kontrollieren:
 - Rechnungs- und Aufgabenhinweise
 - Systemhinweise
 
+Alternativ oben in der App `Demo führen` anklicken. Die App führt dann Schritt für Schritt durch Arbeitscockpit, Dokumenteneingang, Bauakte, Rechnungsprüfung und Produktreife.
+
 ## 4. Bauakten öffnen
 
 Eine Baustelle öffnen, zum Beispiel `Mehrfamilienhaus Lindenweg`. Dort Dokumente, Fristen, Aufgaben und Notizen prüfen.
