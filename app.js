@@ -2194,7 +2194,7 @@ function renderInvoices() {
         <span>${badge(status.tone, status.label)}</span>
         <div class="invoice-actions">
           <button class="secondary-button invoice-open-btn" type="button" data-document="${doc.id}">Öffnen</button>
-          <button class="secondary-button invoice-edit-btn" type="button" data-document="${doc.id}">${editingInvoiceId === doc.id ? "Schließen" : "Daten bearbeiten"}</button>
+          <button class="secondary-button invoice-edit-btn" type="button" data-document="${doc.id}">${editingInvoiceId === doc.id ? "Schließen" : "Bearbeiten"}</button>
           ${canApprove ? `<button class="secondary-button invoice-action-btn" type="button" data-document="${doc.id}" data-action="approve">Freigeben</button>` : ""}
           ${canRelease ? `<button class="primary-button invoice-action-btn" type="button" data-document="${doc.id}" data-action="payment">Zur Zahlung</button>` : ""}
           ${canPay ? `<button class="secondary-button invoice-paid-btn" type="button" data-document="${doc.id}">Bezahlt</button>` : ""}
