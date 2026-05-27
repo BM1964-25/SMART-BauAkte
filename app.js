@@ -503,6 +503,8 @@ const els = {
   acceptSuggestion: document.querySelector("#acceptSuggestion"),
   rejectSuggestion: document.querySelector("#rejectSuggestion"),
   demoGuideBtn: document.querySelector("#demoGuideBtn"),
+  demoRoleSelect: document.querySelector("#demoRoleSelect"),
+  permissionNotice: document.querySelector("#permissionNotice"),
   demoGuide: document.querySelector("#demoGuide"),
   demoGuideStep: document.querySelector("#demoGuideStep"),
   demoGuideTitle: document.querySelector("#demoGuideTitle"),
@@ -622,6 +624,7 @@ let editingInvoiceId = null;
 let projectDossierTab = "overview";
 let demoGuideIndex = 0;
 let demoGuideActive = false;
+let demoRolePreview = localStorage.getItem("bauakte_demo_role") || "";
 const dismissedNotifications = new Set(JSON.parse(localStorage.getItem("bauakte_dismissed_notifications") || "[]"));
 
 function escapeHtml(value = "") {
@@ -1478,7 +1481,11 @@ function renderUploadStatus() {
 }
 
 async function uploadSelectedFiles(files) {
-  if (!files?.length || !hasPermission("document.upload")) return;
+  if (!files?.length) return;
+  if (!hasPermission("document.upload")) {
+    toast(`Upload ist in der Rolle ${effectiveRole()} nicht freigegeben.`);
+    return;
+  }
   setUploadBatch(files, "läuft");
   setSaveState("Dokumente werden hochgeladen", true);
   try {
@@ -1895,7 +1902,58 @@ function renderCommandCenter() {
 }
 
 function hasPermission(permission) {
-  return state.permissions?.includes(permission);
+  return effectivePermissions().includes(permission);
+}
+
+function effectiveRole() {
+  return demoRolePreview || state.user?.role || "Geschäftsführung";
+}
+
+function effectivePermissions() {
+  if (demoRolePreview) {
+    const preview = (state.role_matrix || []).find((role) => role.role === demoRolePreview);
+    if (preview) return preview.permissions.filter((permission) => permission.allowed).map((permission) => permission.key);
+  }
+  return state.permissions || [];
+}
+
+function rolePermissionLabels(roleName = effectiveRole()) {
+  const role = (state.role_matrix || []).find((item) => item.role === roleName);
+  return role ? role.permissions.filter((permission) => permission.allowed).map((permission) => permission.label) : [];
+}
+
+function renderRolePreview() {
+  const uploadAllowed = hasPermission("document.upload");
+  if (els.newDocBtn) {
+    els.newDocBtn.disabled = !uploadAllowed;
+    els.newDocBtn.title = uploadAllowed ? "Dokument prüfen" : `In der Rolle ${effectiveRole()} ist Upload nicht freigegeben.`;
+  }
+  const adminNav = document.querySelector('[data-view="admin"]');
+  if (adminNav) adminNav.hidden = !hasPermission("user.manage");
+  if (els.demoRoleSelect) {
+    const roles = (state.role_matrix || []).map((role) => role.role);
+    els.demoRoleSelect.innerHTML = `<option value="">Meine Rolle: ${escapeHtml(state.user?.role || "aktiv")}</option>${roles.map((role) => `
+      <option value="${escapeHtml(role)}">${escapeHtml(role)}</option>
+    `).join("")}`;
+    els.demoRoleSelect.value = roles.includes(demoRolePreview) ? demoRolePreview : "";
+  }
+  if (!els.permissionNotice) return;
+  if (!demoRolePreview) {
+    els.permissionNotice.hidden = true;
+    return;
+  }
+  const labels = rolePermissionLabels(demoRolePreview);
+  els.permissionNotice.hidden = false;
+  els.permissionNotice.innerHTML = `
+    <div>
+      <span>Demo-Rollenansicht</span>
+      <strong>${escapeHtml(demoRolePreview)}</strong>
+      <small>Sie testen gerade die App aus Sicht dieser Rolle. Es werden keine Benutzerdaten verändert.</small>
+    </div>
+    <div class="permission-chip-list">
+      ${labels.map((label) => `<span>${escapeHtml(label)}</span>`).join("") || "<span>nur Lesemodus</span>"}
+    </div>
+  `;
 }
 
 async function refresh(nextState) {
@@ -1916,6 +1974,7 @@ async function refresh(nextState) {
   setSaveState("Gespeichert");
   const uploadAllowed = hasPermission("document.upload");
   els.newDocBtn.disabled = !uploadAllowed;
+  els.newDocBtn.title = uploadAllowed ? "Dokument prüfen" : `In der Rolle ${effectiveRole()} ist Upload nicht freigegeben.`;
   els.dropzone.classList.toggle("disabled", !uploadAllowed);
   document.querySelector('[data-view="admin"]').hidden = !hasPermission("user.manage");
 }
@@ -2419,16 +2478,19 @@ function renderInvoices() {
     els.invoiceProjectFilter.value = (state.projects || []).some((project) => project.id === current) ? current : "all";
   }
   if (els.exportInvoicesBtn) {
-    els.exportInvoicesBtn.disabled = !rows.length;
+    els.exportInvoicesBtn.disabled = !rows.length || !hasPermission("document.export");
+    els.exportInvoicesBtn.title = hasPermission("document.export") ? "Übersicht exportieren" : `Export ist in der Rolle ${effectiveRole()} nicht freigegeben.`;
     els.exportInvoicesBtn.textContent = `${rows.length}/${allRows.length} Übersicht CSV`;
   }
   if (els.exportDatevInvoicesBtn) {
-    els.exportDatevInvoicesBtn.disabled = !rows.length;
+    els.exportDatevInvoicesBtn.disabled = !rows.length || !hasPermission("document.export");
+    els.exportDatevInvoicesBtn.title = hasPermission("document.export") ? "Buchhaltung exportieren" : `Export ist in der Rolle ${effectiveRole()} nicht freigegeben.`;
     els.exportDatevInvoicesBtn.textContent = `${rows.length} Buchhaltung CSV`;
   }
   if (els.exportPaymentRunBtn) {
     const paymentRows = rows.filter(({ doc }) => ["zur_zahlung", "freigegeben"].includes(doc.status)).length;
-    els.exportPaymentRunBtn.disabled = !paymentRows;
+    els.exportPaymentRunBtn.disabled = !paymentRows || !hasPermission("document.export");
+    els.exportPaymentRunBtn.title = hasPermission("document.export") ? "Zahlungslauf exportieren" : `Export ist in der Rolle ${effectiveRole()} nicht freigegeben.`;
     els.exportPaymentRunBtn.textContent = `${paymentRows} Zahlungslauf CSV`;
   }
   renderInvoiceRules();
@@ -2500,6 +2562,7 @@ function renderInvoices() {
           ${canApprove ? `<button class="secondary-button invoice-action-btn" type="button" data-document="${doc.id}" data-action="approve">Freigeben</button>` : ""}
           ${canRelease ? `<button class="primary-button invoice-action-btn" type="button" data-document="${doc.id}" data-action="payment">Zur Zahlung</button>` : ""}
           ${canPay ? `<button class="secondary-button invoice-paid-btn" type="button" data-document="${doc.id}">Bezahlt</button>` : ""}
+          ${hasPermission("document.update") ? "" : `<button class="secondary-button" type="button" disabled title="Freigaben sind in der Rolle ${escapeHtml(effectiveRole())} nicht freigegeben.">Keine Freigabe</button>`}
         </div>
         ${editingInvoiceId === doc.id ? invoiceEditForm(doc, accounting) : ""}
       </article>
@@ -2912,13 +2975,13 @@ function renderAdmin() {
             <option value="${role}" ${role === user.role ? "selected" : ""}>${role}</option>
           `).join("")}
         </select>
-        <button class="secondary-button user-status-btn" type="button" data-user="${user.id}" data-active="${user.is_active ? "0" : "1"}">
+        <button class="secondary-button user-status-btn" type="button" data-user="${user.id}" data-active="${user.is_active ? "0" : "1"}" ${hasPermission("user.manage") ? "" : "disabled title=\"Benutzerverwaltung ist in dieser Rolle nicht freigegeben.\""}>
           ${user.is_active ? "Sperren" : "Aktivieren"}
         </button>
-        <button class="secondary-button user-mfa-btn" type="button" data-user="${user.id}" data-enabled="${user.mfa_enabled ? "0" : "1"}">
+        <button class="secondary-button user-mfa-btn" type="button" data-user="${user.id}" data-enabled="${user.mfa_enabled ? "0" : "1"}" ${hasPermission("user.manage") ? "" : "disabled title=\"Benutzerverwaltung ist in dieser Rolle nicht freigegeben.\""}>
           ${user.mfa_enabled ? "2FA aus" : "2FA an"}
         </button>
-        <button class="secondary-button user-password-btn" type="button" data-user="${user.id}">Passwort</button>
+        <button class="secondary-button user-password-btn" type="button" data-user="${user.id}" ${hasPermission("user.manage") ? "" : "disabled title=\"Benutzerverwaltung ist in dieser Rolle nicht freigegeben.\""}>Passwort</button>
       </div>
     </article>
   `).join("");
@@ -3718,6 +3781,7 @@ function openDocument(documentId, query = activeSearchQuery) {
 }
 
 function renderAll() {
+  renderRolePreview();
   renderCommandCenter();
   renderProjectList();
   renderProjectDashboard();
@@ -3783,6 +3847,15 @@ function runGlobalSearch() {
 
 els.navItems.forEach((item) => item.addEventListener("click", () => switchView(item.dataset.view)));
 els.demoGuideBtn?.addEventListener("click", () => showDemoStep(0));
+els.demoRoleSelect?.addEventListener("change", () => {
+  demoRolePreview = els.demoRoleSelect.value;
+  localStorage.setItem("bauakte_demo_role", demoRolePreview);
+  if (demoRolePreview && !hasPermission("user.manage") && document.querySelector("#admin")?.classList.contains("active")) {
+    switchView("dashboard");
+  }
+  renderAll();
+  toast(demoRolePreview ? `Demo-Rolle aktiv: ${demoRolePreview}` : "Demo-Rollenansicht beendet.");
+});
 els.demoGuidePrev?.addEventListener("click", () => showDemoStep(demoGuideIndex - 1));
 els.demoGuideNext?.addEventListener("click", () => {
   if (demoGuideIndex >= demoGuideSteps.length - 1) {

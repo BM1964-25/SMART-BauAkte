@@ -112,12 +112,19 @@
               </section>
             </div>
             <button class="secondary-button" id="demoGuideBtn" type="button">Demo führen</button>
+            <label class="role-preview-control">
+              <span>Demo-Rolle</span>
+              <select id="demoRoleSelect">
+                <option value="">Meine Rolle</option>
+              </select>
+            </label>
             <button class="secondary-button" id="passwordBtn" type="button">Passwort ändern</button>
             <button class="secondary-button" id="logoutBtn" type="button">Abmelden</button>
             <button class="primary-button" id="newDocBtn" type="button">Dokument prüfen</button>
           </div>
         </header>
         <section class="search-results" id="searchResults" hidden aria-live="polite"></section>
+        <section class="permission-notice" id="permissionNotice" hidden></section>
         <section class="demo-guide" id="demoGuide" hidden aria-live="polite">
           <div class="demo-guide-main">
             <span id="demoGuideStep">Schritt 1/7</span>

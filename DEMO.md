@@ -36,6 +36,8 @@ Im Dashboard kontrollieren:
 
 Alternativ oben in der App `Demo führen` anklicken. Die App führt dann Schritt für Schritt durch Arbeitscockpit, Dokumenteneingang, Bauakte, Rechnungsprüfung und Produktreife.
 
+Über `Demo-Rolle` kann die Oberfläche aus Sicht von Geschäftsführung, Büro, Bauleitung oder Steuerberater getestet werden. Die Ansicht verändert keine echten Benutzerdaten, zeigt aber freigegebene und gesperrte Aktionen.
+
 ## 4. Bauakten öffnen
 
 Eine Baustelle öffnen, zum Beispiel `Mehrfamilienhaus Lindenweg`. Dort Dokumente, Fristen, Aufgaben und Notizen prüfen.
